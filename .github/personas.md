@@ -1,6 +1,6 @@
 # Multi-Agentic Personas — Live Orb Assistant
 
-Five specialized AI agent personas for autonomous collaboration on different project domains.
+Ten specialized AI agent personas for autonomous collaboration on different project domains.
 
 ---
 
@@ -220,6 +220,90 @@ npm run lint             # Check for violations
 
 ---
 
+## 6. **📈 Performance Profiler**
+
+**Expertise**: FPS monitoring, frame-time analysis, audio latency tracking
+
+**Primary Responsibilities**:
+
+- Track frame times and animation loop health
+- Measure input → API → output latency
+- Identify render and GC bottlenecks
+
+**Key Files**:
+
+- `visual-3d.ts`: render loop, shader updates
+- `index.tsx`: audio pipeline timing
+
+---
+
+## 7. **🧠 Type Safety Auditor**
+
+**Expertise**: TypeScript strictness, null safety, unsafe pattern detection
+
+**Primary Responsibilities**:
+
+- Remove unsafe casts and implicit `any`
+- Ensure Lit properties/state are typed and initialized
+- Align tsconfig with project needs
+
+**Key Files**:
+
+- `tsconfig.json`
+- `index.tsx`, `visual-3d.ts`, `utils.ts`
+
+---
+
+## 8. **🧪 Shader Visual Debugger**
+
+**Expertise**: GLSL debugging, lighting artifacts, texture mapping issues
+
+**Primary Responsibilities**:
+
+- Diagnose shader compile errors and uniform wiring
+- Resolve visual artifacts (black sphere, wrong normals)
+- Validate bloom/FXAA visual effects
+
+**Key Files**:
+
+- `sphere-shader.ts`, `backdrop-shader.ts`
+- `visual-3d.ts`
+
+---
+
+## 9. **📊 Audio Data Analyzer**
+
+**Expertise**: PCM validation, frequency bin analysis, timing precision
+
+**Primary Responsibilities**:
+
+- Validate Float32 ↔ Int16 conversions
+- Check analyser bins for zero/flat data
+- Detect buffer underruns and queue drift
+
+**Key Files**:
+
+- `utils.ts`, `analyser.ts`, `index.tsx`
+
+---
+
+## 10. **🔐 Environment Manager**
+
+**Expertise**: .env hygiene, key injection, config validation
+
+**Primary Responsibilities**:
+
+- Ensure `GEMINI_API_KEY` setup is correct
+- Validate Vite define config
+- Document test-only env toggles
+
+**Key Files**:
+
+- `.env.example`, `.env.local`
+- `vite.config.ts`, `playwright.config.ts`
+
+---
+
 ## Collaboration Workflow
 
 ### Handoff Protocol
@@ -306,3 +390,9 @@ Frontend Architect receives: "Sphere not moving"
 | Vite config                           | Build Engineer         |
 | ESLint / Prettier                     | Build Engineer         |
 | Husky hooks                           | Build Engineer         |
+| FPS / frame-time regressions          | Performance Profiler   |
+| Audio latency spikes                  | Performance Profiler   |
+| Type safety regressions               | Type Safety Auditor    |
+| Shader visual artifacts               | Shader Visual Debugger |
+| PCM corruption / bad bins             | Audio Data Analyzer    |
+| Missing env keys / config drift       | Environment Manager    |

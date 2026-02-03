@@ -1,4 +1,3 @@
-````chatagent
 ---
 name: Performance Profiler
 description: Real-time performance monitoring specialist—owns FPS metrics, audio latency tracking (input→API→output), frame budget analysis, shader performance budgets, and optimization recommendations.
@@ -77,7 +76,7 @@ npm run dev
 # - Width = time spent
 # - Height = call stack depth
 # - Outliers = frame drops
-````
+```
 
 ## When to Escalate
 
@@ -95,7 +94,3 @@ npm run dev
 - [ ] Profile with throttling (CPU slowdown \* 6 recommended)
 - [ ] Test on lower-end hardware (mobile, older Mac)
 - [ ] Verify CDN load times (esm.sh imports)
-
-```
-
-```

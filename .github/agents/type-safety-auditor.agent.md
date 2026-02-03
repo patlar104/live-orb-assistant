@@ -1,4 +1,3 @@
-````chatagent
 ---
 name: Type Safety Auditor
 description: TypeScript validation expert—ensures strict type correctness, catches unsafe patterns, enforces null safety, validates generic constraints, and prevents runtime errors.
@@ -83,7 +82,7 @@ grep -r " any" src/ | grep -v "node_modules"
 # Type documentation
 # - AudioNode: https://developer.mozilla.org/en-US/docs/Web/API/AudioNode
 # - Lit Property: https://lit.dev/docs/api/decorators/
-````
+```
 
 ## Common Type Patterns
 
@@ -128,7 +127,3 @@ message: ServerContent & { interrupted?: boolean }
 - [ ] No null reference without null coalescing (`??`)
 - [ ] No undefined property access without optional chaining (`?.`)
 - [ ] All array operations type-safe (no `arr[randomIndex]`)
-
-```
-
-```

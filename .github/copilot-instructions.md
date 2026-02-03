@@ -37,6 +37,7 @@ Gemini API → OutputAudioContext (24kHz) → AudioBufferSourceNode → Speaker
 
 - **`backdrop-shader.ts`**: RawShaderMaterial (GLSL3) with distance-based gradient and procedural noise
   - Uniforms: `resolution`, `rand` (randomized each frame for noise variation)
+  - E2E mode: `VITE_E2E_STABLE_VISUALS=1` forces `rand=0` for deterministic snapshots
 - **`sphere-shader.ts`**: Vertex shader applying audio-driven spherical deformation
   - Uniforms: `time` (accumulates), `inputData` (Vec4), `outputData` (Vec4)
   - Each uniform component frequency band (x, y, z) controls different deformation amplitudes
@@ -54,6 +55,7 @@ npm run dev        # Vite dev server (http://localhost:3000, hosted on 0.0.0.0)
 npm run build      # Production build → dist/ (note: large bundle as Three.js bundled)
 npm run preview    # Preview built app locally
 npm run lint       # ESLint checking (no auto-fix by default)
+npm run test:e2e   # Playwright e2e + visual snapshots
 npm run format     # Prettier format all files
 ```
 
@@ -64,6 +66,7 @@ npm run format     # Prettier format all files
 - Vite config defines both `process.env.GEMINI_API_KEY` and `process.env.API_KEY` (legacy name)
 - Vite `define` injects: `process.env.GEMINI_API_KEY` at build time from `.env.local`
 - Key accessed in `index.tsx` constructor: `new GoogleGenAI({apiKey: process.env.GEMINI_API_KEY})`
+- Playwright e2e sets `VITE_E2E_DISABLE_LIVE=1` and `VITE_E2E_STABLE_VISUALS=1` in `playwright.config.ts` for deterministic tests
 
 ### Git Hooks (Husky + lint-staged)
 
@@ -102,6 +105,7 @@ npm run format     # Prettier format all files
 - **Interrupted flag**: `message.serverContent?.interrupted` signals user speech detected; immediately stop all playing sources and reset playback queue
 - Convert and send PCM: `session.sendRealtimeInput({media: createBlob(pcmData)})` on each `scriptProcessorNode.onaudioprocess` event
 - Session persists; call `.close()` to reset or create new session
+- E2E mode: `VITE_E2E_DISABLE_LIVE=1` skips live session init and uses a no-op session for UI tests
 
 ### Three.js & Shaders
 
@@ -131,7 +135,7 @@ npm run format     # Prettier format all files
 
 - ES modules throughout (`"type": "module"` in package.json)
 - Import from specific files: `import {GdmLiveAudio} from './index'` (no barrel exports)
-- No wildcard imports in production code; use named imports
+- Avoid wildcard imports except `import * as THREE` (preferred for Three.js) or when required by library APIs
 
 ### File Organization
 
@@ -143,10 +147,9 @@ npm run format     # Prettier format all files
 ### Dependency Loading
 
 - **importmap (esm.sh CDN)**: `index.html` uses CDN imports for `lit`, `@lit/context`, `@google/genai`, `three`
-  - **NOT bundled** in dist; CDN is the source of truth at runtime
-  - Build produces only the custom `index.tsx` (gdm-live-audio, gdm-live-audio-visuals-3d) as bundled code
-  - Network fetch required at runtime for all major dependencies
-  - Chunk size warning in build output (814kB) is expected since Three.js loaded from CDN
+  - Vite build **bundles** dependencies into `dist/assets` by default; importmap remains but is largely unused in the bundled output
+  - Keep importmap versions aligned with `package.json` to avoid dev/prod mismatches
+  - Chunk size warning in build output (814kB) indicates `three` is bundled; treat regressions as a signal to code-split or externalize
 
 ### Browser APIs
 
@@ -171,7 +174,7 @@ npm run format     # Prettier format all files
 
 ### Available Skill Specialists (2026)
 
-The project leverages 5 specialized expert agents beyond core personas for advanced diagnostics:
+The project leverages 5 specialized expert agents beyond the 5 core personas (10 total). `.github/agents/` is the source of truth; `.vscode/agents/` mirrors these for VS Code Copilot selection.
 
 - **Performance Profiler**: Real-time FPS monitoring, audio latency tracking (input→API→output), frame budget analysis, shader performance metrics
 - **Type Safety Auditor**: TypeScript validation, unsafe pattern detection, strict type enforcement, null safety checks
@@ -214,5 +217,7 @@ Issue: Build key missing
   - 🔧 **Use**: Audio Data Analyzer to check frequency bin ranges, Graphics Specialist to adjust scales
 - **Build fails**: Run `npm install`; verify `process.env.GEMINI_API_KEY` defined in `.env.local`; check Vite define in vite.config.ts
   - 🔧 **Use**: Environment Manager for config validation, Build Engineer for compilation
-- **Large bundle size (814kB)**: Expected; Three.js NOT bundled (loaded from CDN). If reducing bundled code, check `dist/assets/index-*.js` size only
+- **Large bundle size (814kB)**: Expected; Three.js bundled in the main chunk. If reducing size, check `dist/assets/index-*.js` and consider code-splitting
   - 🔧 **Use**: Build Engineer for bundle analysis, Performance Profiler for load time metrics
+- **Playwright snapshot failures**: Rebaseline with `npm run test:e2e -- --update-snapshots`; snapshots are OS-specific (darwin/linux/win)
+  - 🔧 **Use**: Shader Visual Debugger for visual diffs, Build Engineer for test config

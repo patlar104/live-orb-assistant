@@ -15,10 +15,21 @@
     "chat.mcp.assisted.nuget.enabled": true,
     "chat.tips.enabled": true,
     "chat.tools.terminal.autoReplyToPrompts": true,
-    "chat.tools.terminal.outputLocation": "terminal",
+    "chat.tools.terminal.outputLocation": "chat",
     "chat.tools.terminal.sandbox.enabled": true,
     "chat.tools.terminal.sandbox.network": {
-      "allowedDomains": [],
+      "allowedDomains": [
+        "api.github.com",
+        "api.mcp.github.com",
+        "cdn.playwright.dev",
+        "esm.sh",
+        "github.com",
+        "npmjs.org",
+        "objects.githubusercontent.com",
+        "raw.githubusercontent.com",
+        "registry.npmjs.org",
+        "registry.yarnpkg.com"
+      ],
       "deniedDomains": [],
     },
     "inlineChat.notebookAgent": true,
