@@ -174,7 +174,7 @@ npm run format     # Prettier format all files
 
 ### Available Skill Specialists (2026)
 
-The project leverages 5 specialized expert agents beyond the 5 core personas (10 total). `.github/agents/` is the source of truth; `.vscode/agents/` mirrors these for VS Code Copilot selection.
+The project leverages 5 specialized expert agents beyond the 5 core personas (10 total). `.github/agents/` is the source of truth.
 
 - **Performance Profiler**: Real-time FPS monitoring, audio latency tracking (input→API→output), frame budget analysis, shader performance metrics
 - **Type Safety Auditor**: TypeScript validation, unsafe pattern detection, strict type enforcement, null safety checks

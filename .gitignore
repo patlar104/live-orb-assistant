@@ -21,8 +21,6 @@ test-results
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/mcp.json
-!.vscode/agents/
-!.vscode/agents/**
 .idea
 .DS_Store
 *.suo
