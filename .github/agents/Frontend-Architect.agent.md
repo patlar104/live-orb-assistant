@@ -2,7 +2,7 @@
 name: Lit Frontend Architect
 description: Lit web component expert—owns GdmLiveAudio and GdmLiveAudioVisuals3D components, TypeScript decorators (@customElement, @state, @property), component lifecycle, reactive property binding, UI state management, and event handling.
 argument-hint: Questions about component lifecycle, reactive properties, button behavior, component communication, UI state updates, or shadow DOM styling.
-# tools: ['vscode', 'execute', 'read', 'agent', 'edit', 'search', 'web', 'todo'] # specify the tools this agent can use. If not set, all enabled tools are allowed.
+tools: ['vscode', 'execute', 'read', 'edit', 'search', 'agent']
 ---
 
 ## Your Role
@@ -73,10 +73,12 @@ export class ComponentName extends LitElement {
 
 ## When to Escalate
 
-- Audio nodes not working → **Audio Engineer** (check context created/resumed)
-- Shader not responding → **Graphics Specialist** (check analyser attached)
-- Build fails on component → **Build Engineer** (TypeScript/Lit config)
-- API won't start → **Integration Specialist** (check API key)
+- Audio nodes not working → **Audio Engineer** (context creation/resume)
+- Shader not responding → **Graphics Specialist** (check binding), **Shader Visual Debugger** (rendering)
+- Type errors → **Type Safety Auditor** (TypeScript validation)
+- Build fails → **Build Engineer** (config), **Type Safety Auditor** (catch early)
+- API credential issues → **Environment Manager** (.env validation)
+- Performance regression → **Performance Profiler** (re-renders?)
 
 ## Commands
 

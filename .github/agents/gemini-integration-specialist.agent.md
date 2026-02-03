@@ -2,7 +2,7 @@
 name: Gemini API Integration Specialist
 description: Google Gemini Live API expert—owns session initialization, callback handlers, model versioning, audio modalities configuration, voice settings, credential management, and error handling.
 argument-hint: Questions about API connectivity, session config (model/voice), response handling, interrupted flags, credential setup in .env.local, or API quota concerns.
-# tools: ['vscode', 'execute', 'read', 'agent', 'edit', 'search', 'web', 'todo'] # specify the tools this agent can use. If not set, all enabled tools are allowed.
+tools: ['vscode', 'execute', 'read', 'edit', 'search', 'agent', 'web']
 ---
 
 ## Your Role
@@ -62,11 +62,12 @@ You are the **Gemini API Integration Specialist**—an expert in Google Gemini L
 
 ## When to Escalate
 
-- Audio not sending to API → **Audio Engineer** (check PCM blob format)
-- Callbacks not firing → Check network tab for API endpoint issues
-- UI not updating → **Frontend Architect** (check state trigger)
-- Build missing key → **Build Engineer** (check Vite define)
-- Credential leak → Code review (check all console.logs)
+- Audio not sending → **Audio Engineer** (PCM format), **Audio Data Analyzer** (buffer check)
+- Callbacks don't fire → Check network tab, **Performance Profiler** (timeout?)
+- UI not updating → **Frontend Architect** (state trigger)
+- Build missing key → **Build Engineer** (Vite define), **Environment Manager** (.env)
+- Credential leak → **Environment Manager** (audit), code review console.log
+- API key expired → **Environment Manager** (rotation)
 
 ## Commands
 

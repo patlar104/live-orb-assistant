@@ -182,13 +182,52 @@ npm run format     # Prettier format all files
 - `EXRLoader` is async (`.load()` callback); sphere (`visible=false`) until texture loaded and PMREM generator applies it
 - **Critical**: If texture fails to load, sphere renders black (visible: false remains); check console for 404 errors
 
+## Specialized Skills & Expert Agents
+
+### Available Skill Specialists (2026)
+
+The project leverages 5 specialized expert agents beyond core personas for advanced diagnostics:
+
+- **Performance Profiler**: Real-time FPS monitoring, audio latency tracking (input→API→output), frame budget analysis, shader performance metrics
+- **Type Safety Auditor**: TypeScript validation, unsafe pattern detection, strict type enforcement, null safety checks
+- **Shader Visual Debugger**: Image-based shader inspection, normal lighting artifact detection, bloom effect analysis using VS Code `imageInput` capability
+- **Audio Data Analyzer**: PCM buffer inspection, frequency bin validation, timing precision checks, corruption detection
+- **Environment Manager**: `.env.local` validation, API key security, build configuration management, secret rotation
+
+### Quick Escalation Guide
+
+```
+Issue: FPS drops at startup
+→ Performance Profiler → Graphics Specialist (if shader) → Build Engineer
+
+Issue: TypeScript errors after refactor
+→ Type Safety Auditor → Frontend Architect
+
+Issue: Shader artifacts visible
+→ Shader Visual Debugger → Graphics Specialist
+
+Issue: Audio stuttering/dropout
+→ Audio Data Analyzer → Audio Engineer
+
+Issue: Build key missing
+→ Environment Manager → Build Engineer
+```
+
 ## Debugging & Common Issues
 
 - **No sound output**: Verify `outputNode.connect(outputAudioContext.destination)` in `index.tsx`; check speaker volume; confirm audio context resumed
+  - 🔧 **Use**: Audio Data Analyzer to inspect PCM buffers, Audio Engineer to check interrupts
 - **Microphone not working**: Use HTTPS or localhost for `getUserMedia()`; check browser permissions; verify media stream callbacks in "Requesting microphone access" UI state
+  - 🔧 **Use**: Audio Engineer for getUserMedia flow, Performance Profiler for timing
 - **Analyser data always zero**: Confirm `Analyser` instance attached to output/input node (set via Lit property); call `update()` every animation frame in `visual-3d.ts`
+  - 🔧 **Use**: Performance Profiler to check animation frame timing, Audio Data Analyzer for bin validation
 - **Sphere not visible until texture loads**: Expected behavior; wait for EXR async load; check Network tab for `piz_compressed.exr` 200 status
+  - 🔧 **Use**: Shader Visual Debugger to inspect texture load state
 - **Shader uniforms not updating**: Verify `sphereMaterial.userData.shader` populated after first fragment compile; confirm `this.sphere.visible = true` after texture load
+  - 🔧 **Use**: Shader Visual Debugger with image capture to debug uniform state, Performance Profiler for frame timing
 - **Frequency deformation not responsive**: Confirm Analyser connected to correct output node; scale factors (x=2, y=0.1, z=10) may be too extreme—adjust in `visual-3d.ts` line assigning `uniforms.outputData`
+  - 🔧 **Use**: Audio Data Analyzer to check frequency bin ranges, Graphics Specialist to adjust scales
 - **Build fails**: Run `npm install`; verify `process.env.GEMINI_API_KEY` defined in `.env.local`; check Vite define in vite.config.ts
+  - 🔧 **Use**: Environment Manager for config validation, Build Engineer for compilation
 - **Large bundle size (814kB)**: Expected; Three.js NOT bundled (loaded from CDN). If reducing bundled code, check `dist/assets/index-*.js` size only
+  - 🔧 **Use**: Build Engineer for bundle analysis, Performance Profiler for load time metrics

@@ -2,7 +2,7 @@
 name: Build & Performance Optimizer
 description: Vite and tooling expert—owns dev server configuration, ESLint/Prettier automation, Husky git hooks, bundle analysis, CDN dependency optimization, and production builds.
 argument-hint: Questions about build failures, linting/formatting, dev server startup, bundle size, git hooks, ESLint/Prettier config, or performance optimization.
-# tools: ['vscode', 'execute', 'read', 'agent', 'edit', 'search', 'web', 'todo'] # specify the tools this agent can use. If not set, all enabled tools are allowed.
+tools: ['vscode', 'execute', 'read', 'edit', 'search', 'agent']
 ---
 
 ## Your Role
@@ -64,10 +64,12 @@ You are the **Build & Performance Optimizer**—a Vite, ESLint, Prettier, and to
 
 ## When to Escalate
 
-- Module not found → Check if import path in component is correct (likely **Frontend Architect** issue)
-- TypeScript compilation error → **Frontend Architect** (check types)
-- Large performance regression → **Graphics Specialist** (shader overhead?) or **Audio Engineer** (processing?)
-- Lint rule too strict → This is culture! Enforce or update eslint.config.js
+- TypeScript errors → **Type Safety Auditor** (catch early)
+- Module not found → **Frontend Architect** (import paths)
+- Performance drops → **Performance Profiler** (FPS/latency), **Graphics Specialist**, or **Audio Engineer**
+- Lint conflicts → **Type Safety Auditor** (enforcement)
+- Missing env vars → **Environment Manager** (.env validation)
+- Bundle bloat → **Performance Profiler** (load analysis)
 
 ## Commands
 
