@@ -20,8 +20,30 @@
   - EXR environment texture (`piz_compressed.exr`) for sphere reflection
 
 - **`analyser.ts`**: Audio frequency analyzer wrapper
-  - Attaches `AnalyserNode` to audio node, extracts frequency bin data
-  - Exposes `.data` (Uint8Array) for real-time frequency values
+  - Hardcoded FFT size: 32 (resulting in 16 frequency bins via `frequencyBinCount`)
+  - Attaches `AnalyserNode` to audio node, extracts frequency bin data via `getByteFrequencyData()`
+  - Exposes `.data` (Uint8Array, 0–255 range) for real-time frequency values
+  - **Legacy**: `visual.ts` contains unused 2D canvas-based visualizer; `visual-3d.ts` is the active 3D renderer
+
+### Audio Data Flow
+
+```
+Mic → InputAudioContext (16kHz) → ScriptProcessorNode → Gemini API
+                                                          ↓
+Gemini API → OutputAudioContext (24kHz) → AudioBufferSourceNode → Speaker
+```
+
+### Shaders & Visual Rendering
+
+- **`backdrop-shader.ts`**: RawShaderMaterial (GLSL3) with distance-based gradient and procedural noise
+  - Uniforms: `resolution`, `rand` (randomized each frame for noise variation)
+- **`sphere-shader.ts`**: Vertex shader applying audio-driven spherical deformation
+  - Uniforms: `time` (accumulates), `inputData` (Vec4), `outputData` (Vec4)
+  - Each uniform component frequency band (x, y, z) controls different deformation amplitudes
+  - Deformation uses sine waves: `sin(band * pos.component + time)` for organic ripple effect
+  - Recalculates normals via tangent/bitangent cross product for correct lighting
+- Animation loop updates shader uniforms from frequency analyzer data; frequency scaling factors:
+  - Input band scales: x=1, y=0.1, z=10; Output band scales: x=2, y=0.1, z=10
 
 ### Audio Data Flow
 
@@ -43,8 +65,8 @@ Gemini API → OutputAudioContext (24kHz) → AudioBufferSourceNode → Speaker
 ### Essential Commands
 
 ```bash
-npm run dev        # Vite dev server (http://localhost:5173)
-npm run build      # Production build → dist/
+npm run dev        # Vite dev server (http://localhost:3000, hosted on 0.0.0.0)
+npm run build      # Production build → dist/ (note: large bundle as Three.js bundled)
 npm run preview    # Preview built app locally
 npm run lint       # ESLint checking (no auto-fix by default)
 npm run format     # Prettier format all files
@@ -54,7 +76,9 @@ npm run format     # Prettier format all files
 
 - Copy `.env.example` → `.env.local`
 - Set `GEMINI_API_KEY` to your Google Gemini API key
-- Key used in `index.tsx` constructor: `new GoogleGenAI({apiKey: process.env.GEMINI_API_KEY})`
+- Vite config defines both `process.env.GEMINI_API_KEY` and `process.env.API_KEY` (legacy name)
+- Vite `define` injects: `process.env.GEMINI_API_KEY` at build time from `.env.local`
+- Key accessed in `index.tsx` constructor: `new GoogleGenAI({apiKey: process.env.GEMINI_API_KEY})`
 
 ### Git Hooks (Husky + lint-staged)
 
@@ -73,18 +97,26 @@ npm run format     # Prettier format all files
 
 ### Audio Context Management
 
-- Two separate contexts required: Gemini input (16kHz) and output (24kHz)
+- **Two separate contexts required**: Gemini input (16kHz) and output (24kHz)
 - Always call `audioContext.resume()` before recording (browser autoplay policy)
-- Use `ScriptProcessor` for PCM capture; convert Float32 → Int16 for Gemini API (`utils.ts`)
+- **Input pipeline**: `getUserMedia()` → `mediaStreamSource` → `inputNode` (GainNode) → `scriptProcessorNode` (256 buffer) → PCM chunks via `createBlob()`
+- **Output pipeline**: Gemini API → base64 → `decode()` → `decodeAudioData()` (24kHz) → `AudioBufferSourceNode` → `outputNode` → destination
+- **Audio Playback Timing**: Uses `nextStartTime` to queue buffers sequentially (prevents overlapping audio)
+  - On audio response: `nextStartTime = max(nextStartTime, currentTime)`, then `source.start(nextStartTime); nextStartTime += audioBuffer.duration`
+  - On interrupted flag: stop all sources, reset `nextStartTime = 0`
+- Convert Float32 → Int16 for Gemini API in `createBlob()` from `utils.ts`
 - Clean up: disconnect nodes and stop media stream tracks in `stopRecording()`
 
 ### Gemini Live API Integration
 
 - Model: `gemini-2.5-flash-native-audio-preview-09-2025`
-- Session callbacks: `onopen`, `onmessage`, `onerror`, `onclose`
-- Audio output comes as base64-encoded 24kHz data in `message.serverContent?.modelTurn?.parts[0]?.inlineData`
-- Use `decode()` and `decodeAudioData()` from `utils.ts` to convert to `AudioBuffer`
-- Handle `interrupted` flag to stop playback when user speaks
+- Session initialization: `client.live.connect({model, callbacks:{onopen, onmessage, onerror, onclose}, config:{responseModalities, speechConfig}})`
+- **Config specifics**: `responseModalities: [Modality.AUDIO]`, voice name: `'Orus'` in `prebuiltVoiceConfig`
+- **Response handling**: Audio output is base64-encoded 24kHz PCM in `message.serverContent?.modelTurn?.parts[0]?.inlineData`
+- **Output audio decoding**: `decode(audio.data)` → Uint8Array → `decodeAudioData()` with context, sampleRate (24000), numChannels (1)
+- **Interrupted flag**: `message.serverContent?.interrupted` signals user speech detected; immediately stop all playing sources and reset playback queue
+- Convert and send PCM: `session.sendRealtimeInput({media: createBlob(pcmData)})` on each `scriptProcessorNode.onaudioprocess` event
+- Session persists; call `.close()` to reset or create new session
 
 ### Three.js & Shaders
 
@@ -123,11 +155,19 @@ npm run format     # Prettier format all files
 
 ## Critical Integration Points
 
+### Dependency Loading
+
+- **importmap (esm.sh CDN)**: `index.html` uses CDN imports for `lit`, `@lit/context`, `@google/genai`, `three`
+  - **NOT bundled** in dist; CDN is the source of truth at runtime
+  - Build produces only the custom `index.tsx` (gdm-live-audio, gdm-live-audio-visuals-3d) as bundled code
+  - Network fetch required at runtime for all major dependencies
+  - Chunk size warning in build output (814kB) is expected since Three.js loaded from CDN
+
 ### Browser APIs
 
-- **`MediaDevices.getUserMedia()`**: Request mic access; handle rejection gracefully
-- **`AudioContext`**: Created with custom sample rates; call `.resume()` before playback
-- **`ScriptProcessor` (deprecated but used here)**: Legacy API for PCM buffer access; plan for replacement with `AudioWorklet` if latency issues arise
+- **`MediaDevices.getUserMedia()`**: Request mic access; handle rejection gracefully; call `.resume()` on input context after grant
+- **`AudioContext`**: Custom sample rates (16kHz input, 24kHz output); contexts created in `index.tsx` constructor
+- **`ScriptProcessorNode`** (deprecated but used here): 256-sample buffer for PCM capture; plan replacement with `AudioWorklet` for lower-latency apps
 
 ### Gemini API Quirks
 
@@ -138,13 +178,17 @@ npm run format     # Prettier format all files
 
 ### Loading Assets
 
-- EXR texture (`piz_compressed.exr`) loaded from root public dir; ensure file exists in build output
-- `EXRLoader` is async; sphere remains hidden until texture loads for visual consistency
+- EXR texture (`piz_compressed.exr`) must reside in `public/` directory; Vite copies to dist root
+- `EXRLoader` is async (`.load()` callback); sphere (`visible=false`) until texture loaded and PMREM generator applies it
+- **Critical**: If texture fails to load, sphere renders black (visible: false remains); check console for 404 errors
 
 ## Debugging & Common Issues
 
-- **No sound output**: Check `outputNode.connect(outputAudioContext.destination)` and speaker volume
-- **Microphone not working**: Ensure HTTPS (or localhost) for `getUserMedia()`; check browser permissions
-- **Analyser data always zero**: Confirm `Analyser` instance attached to correct audio node and `update()` called each frame
-- **Shader uniforms not updating**: Verify `sphereMaterial.userData.shader` exists (only after first fragment compiled)
-- **Build fails**: Run `npm install` and check `process.env.GEMINI_API_KEY` is set in `.env.local`
+- **No sound output**: Verify `outputNode.connect(outputAudioContext.destination)` in `index.tsx`; check speaker volume; confirm audio context resumed
+- **Microphone not working**: Use HTTPS or localhost for `getUserMedia()`; check browser permissions; verify media stream callbacks in "Requesting microphone access" UI state
+- **Analyser data always zero**: Confirm `Analyser` instance attached to output/input node (set via Lit property); call `update()` every animation frame in `visual-3d.ts`
+- **Sphere not visible until texture loads**: Expected behavior; wait for EXR async load; check Network tab for `piz_compressed.exr` 200 status
+- **Shader uniforms not updating**: Verify `sphereMaterial.userData.shader` populated after first fragment compile; confirm `this.sphere.visible = true` after texture load
+- **Frequency deformation not responsive**: Confirm Analyser connected to correct output node; scale factors (x=2, y=0.1, z=10) may be too extreme—adjust in `visual-3d.ts` line assigning `uniforms.outputData`
+- **Build fails**: Run `npm install`; verify `process.env.GEMINI_API_KEY` defined in `.env.local`; check Vite define in vite.config.ts
+- **Large bundle size (814kB)**: Expected; Three.js NOT bundled (loaded from CDN). If reducing bundled code, check `dist/assets/index-*.js` size only
