@@ -1,8 +1,31 @@
 {
   "folders": [
     {
-      "path": "."
-    }
+      "path": ".",
+    },
   ],
-  "settings": {}
+  "settings": {
+    "chat.agentSessionProjection.enabled": true,
+    "chat.allowAnonymousAccess": true,
+    "chat.alternativeToolAction.enabled": true,
+    "chat.checkpoints.showFileChanges": true,
+    "chat.customAgentInSubagent.enabled": true,
+    "chat.experimental.useSkillAdherencePrompt": true,
+    "chat.includeReferencedInstructions": true,
+    "chat.mcp.assisted.nuget.enabled": true,
+    "chat.tips.enabled": true,
+    "chat.tools.terminal.autoReplyToPrompts": true,
+    "chat.tools.terminal.outputLocation": "terminal",
+    "chat.tools.terminal.sandbox.enabled": true,
+    "chat.tools.terminal.sandbox.network": {
+      "allowedDomains": [],
+      "deniedDomains": [],
+    },
+    "inlineChat.notebookAgent": true,
+    "chat.useNestedAgentsMdFiles": true,
+    "chat.unifiedAgentsBar.enabled": true,
+    "chat.viewProgressBadge.enabled": true,
+    "inlineChat.defaultModel": "Auto (copilot)",
+    "chat.editing.explainChanges.enabled": true,
+  },
 }

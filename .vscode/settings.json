@@ -44,5 +44,7 @@
     "https://turborepo.dev": true
   },
   "git.confirmSync": false,
-  "git.autofetch": true
+  "git.autofetch": true,
+  "chat.mcp.serverSampling": {},
+  "chat.promptFilesRecommendations": {}
 }
