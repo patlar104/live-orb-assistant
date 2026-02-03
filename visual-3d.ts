@@ -7,19 +7,19 @@
 // tslint:disable:ban-malformed-import-paths
 // tslint:disable:no-new-decorators
 
-import {LitElement, css, html} from 'lit';
-import {customElement, property} from 'lit/decorators.js';
-import {Analyser} from './analyser';
+import { LitElement, css, html } from 'lit';
+import { customElement, property } from 'lit/decorators.js';
+import { Analyser } from './analyser';
 
 import * as THREE from 'three';
-import {EXRLoader} from 'three/addons/loaders/EXRLoader.js';
-import {EffectComposer} from 'three/addons/postprocessing/EffectComposer.js';
-import {RenderPass} from 'three/addons/postprocessing/RenderPass.js';
-import {ShaderPass} from 'three/addons/postprocessing/ShaderPass.js';
-import {UnrealBloomPass} from 'three/addons/postprocessing/UnrealBloomPass.js';
-import {FXAAShader} from 'three/addons/shaders/FXAAShader.js';
-import {fs as backdropFS, vs as backdropVS} from './backdrop-shader';
-import {vs as sphereVS} from './sphere-shader';
+import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { FXAAShader } from 'three/addons/shaders/FXAAShader.js';
+import { fs as backdropFS, vs as backdropVS } from './backdrop-shader';
+import { vs as sphereVS } from './sphere-shader';
 
 /**
  * 3D live audio visual.
@@ -34,6 +34,8 @@ export class GdmLiveAudioVisuals3D extends LitElement {
   private sphere!: THREE.Mesh;
   private prevTime = 0;
   private rotation = new THREE.Vector3(0, 0, 0);
+  private readonly stableVisuals =
+    import.meta.env.VITE_E2E_STABLE_VISUALS === '1';
 
   private _outputNode!: AudioNode;
 
@@ -83,13 +85,13 @@ export class GdmLiveAudioVisuals3D extends LitElement {
       new THREE.IcosahedronGeometry(10, 5),
       new THREE.RawShaderMaterial({
         uniforms: {
-          resolution: {value: new THREE.Vector2(1, 1)},
-          rand: {value: 0},
+          resolution: { value: new THREE.Vector2(1, 1) },
+          rand: { value: 0 },
         },
         vertexShader: backdropVS,
         fragmentShader: backdropFS,
         glslVersion: THREE.GLSL3,
-      }),
+      })
     );
     backdrop.material.side = THREE.BackSide;
     scene.add(backdrop);
@@ -99,7 +101,7 @@ export class GdmLiveAudioVisuals3D extends LitElement {
       75,
       window.innerWidth / window.innerHeight,
       0.1,
-      1000,
+      1000
     );
     camera.position.set(2, -2, 5);
     this.camera = camera;
@@ -132,9 +134,9 @@ export class GdmLiveAudioVisuals3D extends LitElement {
     });
 
     sphereMaterial.onBeforeCompile = (shader) => {
-      shader.uniforms.time = {value: 0};
-      shader.uniforms.inputData = {value: new THREE.Vector4()};
-      shader.uniforms.outputData = {value: new THREE.Vector4()};
+      shader.uniforms.time = { value: 0 };
+      shader.uniforms.inputData = { value: new THREE.Vector4() };
+      shader.uniforms.outputData = { value: new THREE.Vector4() };
 
       sphereMaterial.userData.shader = shader;
 
@@ -153,7 +155,7 @@ export class GdmLiveAudioVisuals3D extends LitElement {
       new THREE.Vector2(window.innerWidth, window.innerHeight),
       5,
       0.5,
-      0,
+      0
     );
 
     const fxaaPass = new ShaderPass(FXAAShader);
@@ -176,7 +178,7 @@ export class GdmLiveAudioVisuals3D extends LitElement {
       composer.setSize(w, h);
       fxaaPass.material.uniforms['resolution'].value.set(
         1 / (w * dPR),
-        1 / (h * dPR),
+        1 / (h * dPR)
       );
     }
 
@@ -198,11 +200,13 @@ export class GdmLiveAudioVisuals3D extends LitElement {
     const backdropMaterial = this.backdrop.material as THREE.RawShaderMaterial;
     const sphereMaterial = this.sphere.material as THREE.MeshStandardMaterial;
 
-    backdropMaterial.uniforms.rand.value = Math.random() * 10000;
+    backdropMaterial.uniforms.rand.value = this.stableVisuals
+      ? 0
+      : Math.random() * 10000;
 
     if (sphereMaterial.userData.shader) {
       this.sphere.scale.setScalar(
-        1 + (0.2 * this.outputAnalyser.data[1]) / 255,
+        1 + (0.2 * this.outputAnalyser.data[1]) / 255
       );
 
       const f = 0.001;
@@ -214,7 +218,7 @@ export class GdmLiveAudioVisuals3D extends LitElement {
       const euler = new THREE.Euler(
         this.rotation.x,
         this.rotation.y,
-        this.rotation.z,
+        this.rotation.z
       );
       const quaternion = new THREE.Quaternion().setFromEuler(euler);
       const vector = new THREE.Vector3(0, 0, 5);
@@ -228,13 +232,13 @@ export class GdmLiveAudioVisuals3D extends LitElement {
         (1 * this.inputAnalyser.data[0]) / 255,
         (0.1 * this.inputAnalyser.data[1]) / 255,
         (10 * this.inputAnalyser.data[2]) / 255,
-        0,
+        0
       );
       sphereMaterial.userData.shader.uniforms.outputData.value.set(
         (2 * this.outputAnalyser.data[0]) / 255,
         (0.1 * this.outputAnalyser.data[1]) / 255,
         (10 * this.outputAnalyser.data[2]) / 255,
-        0,
+        0
       );
     }
 

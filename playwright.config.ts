@@ -12,6 +12,8 @@ export default defineConfig({
     baseURL: 'http://127.0.0.1:4173',
     permissions: ['microphone'],
     trace: 'on-first-retry',
+    viewport: { width: 1280, height: 720 },
+    deviceScaleFactor: 1,
     launchOptions: {
       args: [
         '--use-fake-device-for-media-stream',
@@ -25,6 +27,7 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     env: {
       VITE_E2E_DISABLE_LIVE: '1',
+      VITE_E2E_STABLE_VISUALS: '1',
       GEMINI_API_KEY: 'test',
     },
   },
