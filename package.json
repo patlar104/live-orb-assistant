@@ -10,17 +10,31 @@
     "lint": "eslint . --ext .ts,.tsx"
   },
   "dependencies": {
-    "lit": "^3.3.0",
-    "@lit/context": "^1.1.5",
     "@google/genai": "^1.15.0",
+    "@lit/context": "^1.1.5",
+    "lit": "^3.3.0",
     "three": "^0.176.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
     "@types/node": "^22.14.0",
     "eslint": "^9.39.2",
+    "globals": "^17.3.0",
     "typescript": "~5.8.2",
     "typescript-eslint": "^8.54.0",
     "vite": "^6.2.0"
-  }
+  },
+  "description": "<div align=\"center\"> <img width=\"1200\" height=\"475\" alt=\"GHBanner\" src=\"https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6\" /> </div>",
+  "main": "eslint.config.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/patlar104/live-orb-assistant.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/patlar104/live-orb-assistant/issues"
+  },
+  "homepage": "https://github.com/patlar104/live-orb-assistant#readme"
 }
