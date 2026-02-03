@@ -27,5 +27,36 @@
     "chat.viewProgressBadge.enabled": true,
     "inlineChat.defaultModel": "Auto (copilot)",
     "chat.editing.explainChanges.enabled": true,
+
+    "chat.editing.suggestedEdits.enabled": true,
+    "chat.editing.suggestedEdits.inlineDisplay": "both",
+
+    "chat.editing.suggestedEdits.showDiffPreview": true,
+
+    "chat.experiments.enabled": true,
+    "chat.experiments.list": [
+      "chatgpt-integration",
+      "advanced-code-understanding",
+      "agent-tool-verification",
+      "dynamic-tool-suggestions",
+      "improved-context-handling",
+      "real-time-collaboration",
+      "customizable-agent-behaviors",
+      "enhanced-security-features",
+    ],
+  },
+  "extensions": {
+    "recommendations": [
+      "GitHub.copilot-chat",
+      "GitHub.copilot",
+      "ms-vscode-remote.remote-containers",
+      "ms-vscode-remote.remote-ssh",
+      "ms-vscode-remote.remote-ssh-edit",
+      "ms-vscode-remote.remote-wsl",
+      "ms-python.python",
+      "ms-python.vscode-pylance",
+      "esbenp.prettier-vscode",
+      "dbaeumer.vscode-eslint",
+    ],
   },
 }
