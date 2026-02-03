@@ -45,21 +45,6 @@ Gemini API → OutputAudioContext (24kHz) → AudioBufferSourceNode → Speaker
 - Animation loop updates shader uniforms from frequency analyzer data; frequency scaling factors:
   - Input band scales: x=1, y=0.1, z=10; Output band scales: x=2, y=0.1, z=10
 
-### Audio Data Flow
-
-```
-Mic → InputAudioContext (16kHz) → ScriptProcessorNode → Gemini API
-                                                          ↓
-Gemini API → OutputAudioContext (24kHz) → AudioBufferSourceNode → Speaker
-```
-
-### Shaders & Visual Rendering
-
-- **`backdrop-shader.ts`**: RawShaderMaterial (GLSL3) for environment background
-- **`sphere-shader.ts`**: Vertex shader modifying sphere based on uniform data
-- Uniforms passed each frame: `time`, `inputData` (3 frequency bands), `outputData` (3 bands)
-- Animation loop updates shader uniforms from frequency analyzer data
-
 ## Development Workflows
 
 ### Essential Commands
