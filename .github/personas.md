@@ -211,6 +211,14 @@ npm run lint             # Check for violations
 # Vite: serve with --host for network testing
 ```
 
+**Release Checklist (Condensed)**:
+
+1. `npm run lint`
+2. `npm run build`
+3. `npm run test:e2e`
+4. `npm run preview` and verify http://localhost:3000
+5. `git tag -a vX.Y.Z -m "vX.Y.Z"` then `git push --tags`
+
 **Success Metrics**:
 
 - Build completes in < 1s (dev), < 5s (prod)
@@ -234,6 +242,20 @@ npm run lint             # Check for violations
 
 - `visual-3d.ts`: render loop, shader updates
 - `index.tsx`: audio pipeline timing
+
+**Deep-dive Profiling Recipe**:
+
+1. `npm run dev`
+2. Record 10–20s in DevTools Performance while speaking
+3. Target ≤ 16.7ms per frame and ≥ 60 FPS
+4. Target end-to-end audio latency < 200ms
+5. Log `nextStartTime - currentTime` and keep 0.1–0.5s
+
+**Success Metrics**:
+
+- Stable 60 FPS with no long frames
+- Audio latency under 200ms end-to-end
+- No sustained queue drift or underruns
 
 ---
 
@@ -268,6 +290,14 @@ npm run lint             # Check for violations
 
 - `sphere-shader.ts`, `backdrop-shader.ts`
 - `visual-3d.ts`
+
+**Shader Debug Recipe**:
+
+1. Verify `piz_compressed.exr` loads with 200 status
+2. Confirm `sphere.visible = true` after EXR load
+3. Inspect `sphereMaterial.userData.shader.uniforms`
+4. Validate analyser bins are non-zero
+5. Fixes: recompute normals, confirm envMap set, verify time accumulation
 
 ---
 

@@ -58,6 +58,16 @@ You are the **Performance Profiler**—a performance monitoring and optimization
 - ✓ Garbage collection pauses < 10ms (if any)
 - ✓ No excessive re-renders in Lit components
 
+## Deep-dive Profiling Recipe
+
+1. Start dev server: `npm run dev`
+2. Record 10–20s in Chrome DevTools Performance while speaking
+3. Target frame time ≤ 16.7ms and ≥ 60 FPS
+4. Target end-to-end audio latency < 200ms
+5. Log queue depth: `nextStartTime - currentTime` should stay 0.1–0.5s
+6. Use deterministic visuals if needed: `VITE_E2E_STABLE_VISUALS=1 npm run dev`
+7. Escalate to Graphics Specialist or Audio Engineer when hotspots appear
+
 ## Profiling Commands
 
 ```bash

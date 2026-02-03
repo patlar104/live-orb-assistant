@@ -24,3 +24,27 @@ View your app in AI Studio: https://ai.studio/apps/bundled/live_audio
 - `npm run build` Builds the production app.
 - `npm run preview` Serves the production build locally.
 - `npm run lint` Runs ESLint across the project.
+
+## Workflows
+
+Release (condensed):
+
+1. `npm run lint`
+2. `npm run build`
+3. `npm run test:e2e`
+4. `npm run preview` and verify http://localhost:3000
+5. `git tag -a vX.Y.Z -m "vX.Y.Z"` then `git push --tags`
+
+Performance profiling (condensed):
+
+1. `npm run dev`
+2. Record 10–20s in DevTools Performance while speaking
+3. Target ≥ 60 FPS and < 200ms end-to-end audio latency
+
+Shader debug (condensed):
+
+1. Confirm `piz_compressed.exr` loads (Network tab, 200)
+2. Inspect `sphereMaterial.userData.shader.uniforms`
+3. Verify analyser bins are non-zero
+
+See `AGENTS.md` for deep-dive workflow steps.

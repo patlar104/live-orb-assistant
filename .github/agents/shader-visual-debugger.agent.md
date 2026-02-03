@@ -84,6 +84,14 @@ Example artifacts:
 - ✓ Bloom enhances without oversaturation
 - ✓ No visual artifacts or color banding
 
+## Shader Debug Recipe
+
+1. Verify `piz_compressed.exr` loads with 200 status in Network tab
+2. Confirm `sphere.visible = true` after EXR load
+3. Inspect uniforms: `sphereMaterial.userData.shader.uniforms`
+4. Validate analyser bins are non-zero: `window.analyser?.data`
+5. Common fixes: recompute normals, confirm envMap set, verify time accumulation
+
 ## Debugging Commands
 
 ```bash

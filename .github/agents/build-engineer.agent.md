@@ -62,6 +62,20 @@ You are the **Build & Performance Optimizer**—a Vite, ESLint, Prettier, and to
 - ✓ Bundle size stable (major deps bundled in dist/assets)
 - ✓ Zero import errors at runtime
 
+## Release Checklist (Full)
+
+1. Confirm clean tree: `git status`
+2. Update version in `package.json` (and `package-lock.json` if policy requires)
+3. Update or create `CHANGELOG.md`
+4. Run: `npm run lint`
+5. Run: `npm run build`
+6. Run: `npm run test:e2e`
+7. Run secret/bundle scans (see Env checks in `AGENTS.md`)
+8. Smoke test: `npm run preview` and verify http://localhost:3000
+9. Tag: `git tag -a vX.Y.Z -m "vX.Y.Z"`
+10. Push tags: `git push --tags`
+11. Draft GitHub release notes from `CHANGELOG.md`
+
 ## When to Escalate
 
 - TypeScript errors → **Type Safety Auditor** (catch early)

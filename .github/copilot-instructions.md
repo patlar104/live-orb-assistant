@@ -73,6 +73,38 @@ npm run format     # Prettier format all files
 - **Pre-commit**: Auto-formats staged `.ts/.tsx` files with Prettier, then runs ESLint --fix. Blocks commit if lint errors remain.
 - **Pre-push**: Runs `npm run build` to ensure code compiles.
 
+### Release Checklist (Full)
+
+1. Confirm clean tree: `git status`
+2. Update version in `package.json` (and `package-lock.json` if policy requires)
+3. Update or create `CHANGELOG.md`
+4. Run: `npm run lint`
+5. Run: `npm run build`
+6. Run: `npm run test:e2e`
+7. Run secret/bundle scans (see Env checks in `AGENTS.md`)
+8. Smoke test: `npm run preview` and verify http://localhost:3000
+9. Tag: `git tag -a vX.Y.Z -m "vX.Y.Z"`
+10. Push tags: `git push --tags`
+11. Draft GitHub release notes from `CHANGELOG.md`
+
+### Performance Profiling Steps
+
+1. Start dev server: `npm run dev`
+2. Record 10–20s in Chrome DevTools Performance while speaking
+3. Target frame time ≤ 16.7ms and ≥ 60 FPS
+4. Target end-to-end audio latency < 200ms
+5. Log queue depth: `nextStartTime - currentTime` should stay 0.1–0.5s
+6. Use deterministic visuals if needed: `VITE_E2E_STABLE_VISUALS=1 npm run dev`
+7. Escalate to Performance Profiler or Graphics & Shader Specialist when hotspots appear
+
+### Shader Debug Recipe
+
+1. Verify `piz_compressed.exr` loads with 200 status in Network tab
+2. Confirm `sphere.visible = true` after EXR load
+3. Inspect uniforms: `sphereMaterial.userData.shader.uniforms`
+4. Validate analyser bins are non-zero: `window.analyser?.data`
+5. Common fixes: recompute normals, confirm envMap set, verify time accumulation
+
 ## Code Patterns & Conventions
 
 ### Lit Web Components
