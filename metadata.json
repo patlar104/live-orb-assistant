@@ -1,0 +1,8 @@
+{
+  "name": "Live Orb Assistant",
+  "description": "Speak, and the orb responds. An interactive experience powered by the Gemini Live Audio API.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "prompt": ""
+}
