@@ -31,11 +31,16 @@ export class GdmLiveAudioVisuals3D extends LitElement {
   private camera!: THREE.PerspectiveCamera;
   private backdrop!: THREE.Mesh;
   private composer!: EffectComposer;
+  private renderer!: THREE.WebGLRenderer;
   private sphere!: THREE.Mesh;
   private prevTime = 0;
   private rotation = new THREE.Vector3(0, 0, 0);
   private readonly stableVisuals =
     import.meta.env.VITE_E2E_STABLE_VISUALS === '1';
+  private smoothedOutput = 0;
+  private readonly hueBase = 0.62;
+  private readonly hueRange = 0.18;
+  private readonly colorScratch = new THREE.Color();
 
   private _outputNode!: AudioNode;
 
@@ -109,9 +114,11 @@ export class GdmLiveAudioVisuals3D extends LitElement {
     const renderer = new THREE.WebGLRenderer({
       canvas: this.canvas,
       antialias: !true,
+      preserveDrawingBuffer: true,
     });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(window.devicePixelRatio / 1);
+    this.renderer = renderer;
 
     const geometry = new THREE.IcosahedronGeometry(1, 10);
 
@@ -200,6 +207,14 @@ export class GdmLiveAudioVisuals3D extends LitElement {
     const backdropMaterial = this.backdrop.material as THREE.RawShaderMaterial;
     const sphereMaterial = this.sphere.material as THREE.MeshStandardMaterial;
 
+    let outputSum = 0;
+    const outputBins = Math.min(8, this.outputAnalyser.data.length);
+    for (let i = 0; i < outputBins; i++) {
+      outputSum += this.outputAnalyser.data[i];
+    }
+    const outputEnergy = outputSum / (outputBins * 255);
+    this.smoothedOutput = this.smoothedOutput * 0.93 + outputEnergy * 0.07;
+
     backdropMaterial.uniforms.rand.value = this.stableVisuals
       ? 0
       : Math.random() * 10000;
@@ -208,6 +223,14 @@ export class GdmLiveAudioVisuals3D extends LitElement {
       this.sphere.scale.setScalar(
         1 + (0.2 * this.outputAnalyser.data[1]) / 255
       );
+
+      const hue = this.hueBase + this.hueRange * this.smoothedOutput;
+      const saturation = 0.5 + 0.5 * this.smoothedOutput;
+      const lightness = 0.14 + 0.22 * this.smoothedOutput;
+      this.colorScratch.setHSL(hue, saturation, lightness);
+      sphereMaterial.color.copy(this.colorScratch);
+      sphereMaterial.emissive.copy(this.colorScratch);
+      sphereMaterial.emissiveIntensity = 1.4 + 1.2 * this.smoothedOutput;
 
       const f = 0.001;
       this.rotation.x += (dt * f * 0.5 * this.outputAnalyser.data[1]) / 255;
@@ -248,6 +271,18 @@ export class GdmLiveAudioVisuals3D extends LitElement {
   protected firstUpdated() {
     this.canvas = this.shadowRoot!.querySelector('canvas') as HTMLCanvasElement;
     this.init();
+  }
+
+  public async captureSnapshot(): Promise<Blob | null> {
+    if (!this.canvas || !this.renderer) {
+      return null;
+    }
+
+    this.composer?.render();
+
+    return new Promise((resolve) => {
+      this.canvas.toBlob((blob) => resolve(blob), 'image/png');
+    });
   }
 
   protected render() {
