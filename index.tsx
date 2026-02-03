@@ -4,10 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {GoogleGenAI, LiveServerMessage, Modality, Session} from '@google/genai';
-import {LitElement, css, html} from 'lit';
-import {customElement, state} from 'lit/decorators.js';
-import {createBlob, decode, decodeAudioData} from './utils';
+import {
+  GoogleGenAI,
+  LiveServerMessage,
+  Modality,
+  Session,
+} from '@google/genai';
+import { LitElement, css, html } from 'lit';
+import { customElement, state } from 'lit/decorators.js';
+import { createBlob, decode, decodeAudioData } from './utils';
 import './visual-3d';
 
 @customElement('gdm-live-audio')
@@ -18,10 +23,12 @@ export class GdmLiveAudio extends LitElement {
 
   private client: GoogleGenAI;
   private session: Session;
-  private inputAudioContext = new (window.AudioContext ||
-    window.webkitAudioContext)({sampleRate: 16000});
-  private outputAudioContext = new (window.AudioContext ||
-    window.webkitAudioContext)({sampleRate: 24000});
+  private inputAudioContext = new (
+    window.AudioContext || window.webkitAudioContext
+  )({ sampleRate: 16000 });
+  private outputAudioContext = new (
+    window.AudioContext || window.webkitAudioContext
+  )({ sampleRate: 24000 });
   @state() inputNode = this.inputAudioContext.createGain();
   @state() outputNode = this.outputAudioContext.createGain();
   private nextStartTime = 0;
@@ -29,6 +36,7 @@ export class GdmLiveAudio extends LitElement {
   private sourceNode: AudioBufferSourceNode;
   private scriptProcessorNode: ScriptProcessorNode;
   private sources = new Set<AudioBufferSourceNode>();
+  private readonly liveDisabled = import.meta.env.VITE_E2E_DISABLE_LIVE === '1';
 
   static styles = css`
     #status {
@@ -88,11 +96,20 @@ export class GdmLiveAudio extends LitElement {
   private async initClient() {
     this.initAudio();
 
+    this.outputNode.connect(this.outputAudioContext.destination);
+
+    if (this.liveDisabled) {
+      this.session = {
+        sendRealtimeInput: () => {},
+        close: () => {},
+      } as Session;
+      this.updateStatus('Live session disabled for tests.');
+      return;
+    }
+
     this.client = new GoogleGenAI({
       apiKey: process.env.GEMINI_API_KEY,
     });
-
-    this.outputNode.connect(this.outputAudioContext.destination);
 
     this.initSession();
   }
@@ -114,14 +131,14 @@ export class GdmLiveAudio extends LitElement {
             if (audio) {
               this.nextStartTime = Math.max(
                 this.nextStartTime,
-                this.outputAudioContext.currentTime,
+                this.outputAudioContext.currentTime
               );
 
               const audioBuffer = await decodeAudioData(
                 decode(audio.data),
                 this.outputAudioContext,
                 24000,
-                1,
+                1
               );
               const source = this.outputAudioContext.createBufferSource();
               source.buffer = audioBuffer;
@@ -154,7 +171,7 @@ export class GdmLiveAudio extends LitElement {
         config: {
           responseModalities: [Modality.AUDIO],
           speechConfig: {
-            voiceConfig: {prebuiltVoiceConfig: {voiceName: 'Orus'}},
+            voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Orus' } },
             // languageCode: 'en-GB'
           },
         },
@@ -177,6 +194,11 @@ export class GdmLiveAudio extends LitElement {
       return;
     }
 
+    if (!this.session) {
+      this.updateStatus('Live session not ready.');
+      return;
+    }
+
     this.inputAudioContext.resume();
 
     this.updateStatus('Requesting microphone access...');
@@ -190,7 +212,7 @@ export class GdmLiveAudio extends LitElement {
       this.updateStatus('Microphone access granted. Starting capture...');
 
       this.sourceNode = this.inputAudioContext.createMediaStreamSource(
-        this.mediaStream,
+        this.mediaStream
       );
       this.sourceNode.connect(this.inputNode);
 
@@ -198,7 +220,7 @@ export class GdmLiveAudio extends LitElement {
       this.scriptProcessorNode = this.inputAudioContext.createScriptProcessor(
         bufferSize,
         1,
-        1,
+        1
       );
 
       this.scriptProcessorNode.onaudioprocess = (audioProcessingEvent) => {
@@ -207,7 +229,7 @@ export class GdmLiveAudio extends LitElement {
         const inputBuffer = audioProcessingEvent.inputBuffer;
         const pcmData = inputBuffer.getChannelData(0);
 
-        this.session.sendRealtimeInput({media: createBlob(pcmData)});
+        this.session.sendRealtimeInput({ media: createBlob(pcmData) });
       };
 
       this.sourceNode.connect(this.scriptProcessorNode);
@@ -259,49 +281,57 @@ export class GdmLiveAudio extends LitElement {
           <button
             id="resetButton"
             @click=${this.reset}
-            ?disabled=${this.isRecording}>
+            ?disabled=${this.isRecording}
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               height="40px"
               viewBox="0 -960 960 960"
               width="40px"
-              fill="#ffffff">
+              fill="#ffffff"
+            >
               <path
-                d="M480-160q-134 0-227-93t-93-227q0-134 93-227t227-93q69 0 132 28.5T720-690v-110h80v280H520v-80h168q-32-56-87.5-88T480-720q-100 0-170 70t-70 170q0 100 70 170t170 70q77 0 139-44t87-116h84q-28 106-114 173t-196 67Z" />
+                d="M480-160q-134 0-227-93t-93-227q0-134 93-227t227-93q69 0 132 28.5T720-690v-110h80v280H520v-80h168q-32-56-87.5-88T480-720q-100 0-170 70t-70 170q0 100 70 170t170 70q77 0 139-44t87-116h84q-28 106-114 173t-196 67Z"
+              />
             </svg>
           </button>
           <button
             id="startButton"
             @click=${this.startRecording}
-            ?disabled=${this.isRecording}>
+            ?disabled=${this.isRecording}
+          >
             <svg
               viewBox="0 0 100 100"
               width="32px"
               height="32px"
               fill="#c80000"
-              xmlns="http://www.w3.org/2000/svg">
+              xmlns="http://www.w3.org/2000/svg"
+            >
               <circle cx="50" cy="50" r="50" />
             </svg>
           </button>
           <button
             id="stopButton"
             @click=${this.stopRecording}
-            ?disabled=${!this.isRecording}>
+            ?disabled=${!this.isRecording}
+          >
             <svg
               viewBox="0 0 100 100"
               width="32px"
               height="32px"
               fill="#000000"
-              xmlns="http://www.w3.org/2000/svg">
+              xmlns="http://www.w3.org/2000/svg"
+            >
               <rect x="0" y="0" width="100" height="100" rx="15" />
             </svg>
           </button>
         </div>
 
-        <div id="status"> ${this.error} </div>
+        <div id="status">${this.error}</div>
         <gdm-live-audio-visuals-3d
           .inputNode=${this.inputNode}
-          .outputNode=${this.outputNode}></gdm-live-audio-visuals-3d>
+          .outputNode=${this.outputNode}
+        ></gdm-live-audio-visuals-3d>
       </div>
     `;
   }
