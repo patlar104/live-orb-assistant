@@ -37,6 +37,7 @@ Gemini API → OutputAudioContext (24kHz) → AudioBufferSourceNode → Speaker
 
 - **`backdrop-shader.ts`**: RawShaderMaterial (GLSL3) with distance-based gradient and procedural noise
   - Uniforms: `resolution`, `rand` (randomized each frame for noise variation)
+  - E2E mode: `VITE_E2E_STABLE_VISUALS=1` forces `rand=0` for deterministic snapshots
 - **`sphere-shader.ts`**: Vertex shader applying audio-driven spherical deformation
   - Uniforms: `time` (accumulates), `inputData` (Vec4), `outputData` (Vec4)
   - Each uniform component frequency band (x, y, z) controls different deformation amplitudes
@@ -54,6 +55,7 @@ npm run dev        # Vite dev server (http://localhost:3000, hosted on 0.0.0.0)
 npm run build      # Production build → dist/ (note: large bundle as Three.js bundled)
 npm run preview    # Preview built app locally
 npm run lint       # ESLint checking (no auto-fix by default)
+npm run test:e2e   # Playwright e2e + visual snapshots
 npm run format     # Prettier format all files
 ```
 
@@ -64,11 +66,44 @@ npm run format     # Prettier format all files
 - Vite config defines both `process.env.GEMINI_API_KEY` and `process.env.API_KEY` (legacy name)
 - Vite `define` injects: `process.env.GEMINI_API_KEY` at build time from `.env.local`
 - Key accessed in `index.tsx` constructor: `new GoogleGenAI({apiKey: process.env.GEMINI_API_KEY})`
+- Playwright e2e sets `VITE_E2E_DISABLE_LIVE=1` and `VITE_E2E_STABLE_VISUALS=1` in `playwright.config.ts` for deterministic tests
 
 ### Git Hooks (Husky + lint-staged)
 
 - **Pre-commit**: Auto-formats staged `.ts/.tsx` files with Prettier, then runs ESLint --fix. Blocks commit if lint errors remain.
 - **Pre-push**: Runs `npm run build` to ensure code compiles.
+
+### Release Checklist (Full)
+
+1. Confirm clean tree: `git status`
+2. Update version in `package.json` (and `package-lock.json` if policy requires)
+3. Update or create `CHANGELOG.md`
+4. Run: `npm run lint`
+5. Run: `npm run build`
+6. Run: `npm run test:e2e`
+7. Run secret/bundle scans (see Env checks in `AGENTS.md`)
+8. Smoke test: `npm run preview` and verify http://localhost:3000
+9. Tag: `git tag -a vX.Y.Z -m "vX.Y.Z"`
+10. Push tags: `git push --tags`
+11. Draft GitHub release notes from `CHANGELOG.md`
+
+### Performance Profiling Steps
+
+1. Start dev server: `npm run dev`
+2. Record 10–20s in Chrome DevTools Performance while speaking
+3. Target frame time ≤ 16.7ms and ≥ 60 FPS
+4. Target end-to-end audio latency < 200ms
+5. Log queue depth: `nextStartTime - currentTime` should stay 0.1–0.5s
+6. Use deterministic visuals if needed: `VITE_E2E_STABLE_VISUALS=1 npm run dev`
+7. Escalate to Performance Profiler or Graphics & Shader Specialist when hotspots appear
+
+### Shader Debug Recipe
+
+1. Verify `piz_compressed.exr` loads with 200 status in Network tab
+2. Confirm `sphere.visible = true` after EXR load
+3. Inspect uniforms: `sphereMaterial.userData.shader.uniforms`
+4. Validate analyser bins are non-zero: `window.analyser?.data`
+5. Common fixes: recompute normals, confirm envMap set, verify time accumulation
 
 ## Code Patterns & Conventions
 
@@ -102,6 +137,7 @@ npm run format     # Prettier format all files
 - **Interrupted flag**: `message.serverContent?.interrupted` signals user speech detected; immediately stop all playing sources and reset playback queue
 - Convert and send PCM: `session.sendRealtimeInput({media: createBlob(pcmData)})` on each `scriptProcessorNode.onaudioprocess` event
 - Session persists; call `.close()` to reset or create new session
+- E2E mode: `VITE_E2E_DISABLE_LIVE=1` skips live session init and uses a no-op session for UI tests
 
 ### Three.js & Shaders
 
@@ -131,7 +167,7 @@ npm run format     # Prettier format all files
 
 - ES modules throughout (`"type": "module"` in package.json)
 - Import from specific files: `import {GdmLiveAudio} from './index'` (no barrel exports)
-- No wildcard imports in production code; use named imports
+- Avoid wildcard imports except `import * as THREE` (preferred for Three.js) or when required by library APIs
 
 ### File Organization
 
@@ -143,10 +179,9 @@ npm run format     # Prettier format all files
 ### Dependency Loading
 
 - **importmap (esm.sh CDN)**: `index.html` uses CDN imports for `lit`, `@lit/context`, `@google/genai`, `three`
-  - **NOT bundled** in dist; CDN is the source of truth at runtime
-  - Build produces only the custom `index.tsx` (gdm-live-audio, gdm-live-audio-visuals-3d) as bundled code
-  - Network fetch required at runtime for all major dependencies
-  - Chunk size warning in build output (814kB) is expected since Three.js loaded from CDN
+  - Vite build **bundles** dependencies into `dist/assets` by default; importmap remains but is largely unused in the bundled output
+  - Keep importmap versions aligned with `package.json` to avoid dev/prod mismatches
+  - Chunk size warning in build output (814kB) indicates `three` is bundled; treat regressions as a signal to code-split or externalize
 
 ### Browser APIs
 
@@ -171,7 +206,7 @@ npm run format     # Prettier format all files
 
 ### Available Skill Specialists (2026)
 
-The project leverages 5 specialized expert agents beyond core personas for advanced diagnostics:
+The project leverages 5 specialized expert agents beyond the 5 core personas (10 total). `.github/agents/` is the source of truth.
 
 - **Performance Profiler**: Real-time FPS monitoring, audio latency tracking (input→API→output), frame budget analysis, shader performance metrics
 - **Type Safety Auditor**: TypeScript validation, unsafe pattern detection, strict type enforcement, null safety checks
@@ -214,5 +249,7 @@ Issue: Build key missing
   - 🔧 **Use**: Audio Data Analyzer to check frequency bin ranges, Graphics Specialist to adjust scales
 - **Build fails**: Run `npm install`; verify `process.env.GEMINI_API_KEY` defined in `.env.local`; check Vite define in vite.config.ts
   - 🔧 **Use**: Environment Manager for config validation, Build Engineer for compilation
-- **Large bundle size (814kB)**: Expected; Three.js NOT bundled (loaded from CDN). If reducing bundled code, check `dist/assets/index-*.js` size only
+- **Large bundle size (814kB)**: Expected; Three.js bundled in the main chunk. If reducing size, check `dist/assets/index-*.js` and consider code-splitting
   - 🔧 **Use**: Build Engineer for bundle analysis, Performance Profiler for load time metrics
+- **Playwright snapshot failures**: Rebaseline with `npm run test:e2e -- --update-snapshots`; snapshots are OS-specific (darwin/linux/win)
+  - 🔧 **Use**: Shader Visual Debugger for visual diffs, Build Engineer for test config

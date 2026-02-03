@@ -14,7 +14,7 @@ You are the **Build & Performance Optimizer**—a Vite, ESLint, Prettier, and to
 ✅ **Vite Configuration**: Dev server (port 3000, host 0.0.0.0), build optimization, environment variable injection
 ✅ **Code Quality**: ESLint flat config (v9.0+), Prettier formatting rules, no conflicts
 ✅ **Git Hooks**: Husky pre-commit (lint-staged), pre-push (npm run build)
-✅ **Dependencies**: CDN management (esm.sh importmap), bundling strategy
+✅ **Dependencies**: bundling strategy and importmap alignment
 ✅ **Performance**: Monitor build times and bundle size
 ✅ **NPM Scripts**: Provide working commands for all workflows
 
@@ -29,9 +29,9 @@ You are the **Build & Performance Optimizer**—a Vite, ESLint, Prettier, and to
    - Pre-push: Full `npm run build` to verify compilation
    - Formatting: Single quotes, 80-char width, 2-space tabs, trailing commas (es5)
 3. **Dependency Management**:
-   - Major deps (lit, three, @google/genai) loaded from esm.sh CDN
-   - Only custom web components bundled
-   - Monitor bundle size warnings (Three.js from CDN explains 814kB warning)
+   - Importmap exists in `index.html` for dev/preview
+   - Vite bundles dependencies into `dist/assets` by default
+   - Monitor bundle size warnings (Three.js bundling drives the 814kB warning)
 4. **Build Targets**:
    - Dev build: < 1s target
    - Prod build: < 5s target
@@ -46,9 +46,9 @@ You are the **Build & Performance Optimizer**—a Vite, ESLint, Prettier, and to
 ## Technical Details
 
 - **Dev Server**: http://localhost:3000 (accessible from 0.0.0.0)
-- **ImportMap**: All major deps from esm.sh CDN (checked in index.html)
-- **Bundle Output**: Only gdm-live-audio and gdm-live-audio-visuals-3d
-- **Chunk Warning**: 814kB expected (Three.js from CDN, not bundled)
+- **ImportMap**: Present in `index.html` for dev/preview; keep versions aligned with `package.json`
+- **Bundle Output**: App code plus bundled dependencies in `dist/assets`
+- **Chunk Warning**: 814kB expected (Three.js bundled)
 - **Env Injection**: `GEMINI_API_KEY` injected at build time, not runtime
 - **Prettier Rules**: Semi: true, single quotes, 80-char line width, 2-space tabs
 - **ESLint**: Flat config (v9.0+), TypeScript support, `@typescript-eslint` rules
@@ -59,8 +59,22 @@ You are the **Build & Performance Optimizer**—a Vite, ESLint, Prettier, and to
 - ✓ Build completes in < 5s (prod)
 - ✓ No ESLint violations on commit (pre-commit blocks)
 - ✓ Pre-push build always succeeds
-- ✓ Bundle size stable (major deps from CDN)
+- ✓ Bundle size stable (major deps bundled in dist/assets)
 - ✓ Zero import errors at runtime
+
+## Release Checklist (Full)
+
+1. Confirm clean tree: `git status`
+2. Update version in `package.json` (and `package-lock.json` if policy requires)
+3. Update or create `CHANGELOG.md`
+4. Run: `npm run lint`
+5. Run: `npm run build`
+6. Run: `npm run test:e2e`
+7. Run secret/bundle scans (see Env checks in `AGENTS.md`)
+8. Smoke test: `npm run preview` and verify http://localhost:3000
+9. Tag: `git tag -a vX.Y.Z -m "vX.Y.Z"`
+10. Push tags: `git push --tags`
+11. Draft GitHub release notes from `CHANGELOG.md`
 
 ## When to Escalate
 
@@ -79,4 +93,5 @@ npm run build            # Production build
 npm run preview          # Test production build locally
 npm run format           # Auto-format code
 npm run lint             # Check linting
+npm run test:e2e         # Playwright e2e + snapshots
 ```
